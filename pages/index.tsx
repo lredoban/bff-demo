@@ -1,29 +1,27 @@
-import type { NextPage } from 'next'
+import type { GetServerSideProps, NextPage } from 'next'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import styles from '../styles/Home.module.css'
-import { Profile } from './api/bff'
+import type { Profile } from './api/bff'
 import axios from 'axios'
 import dayjs from 'dayjs'
+interface Props {
+	profile: Profile
+  }
 
-const Home: NextPage = () => {
-	const [loading, setLoading] = useState<boolean>(false)
-	const [profile, setProfile] = useState<Profile>({} as Profile)
+export  const getServerSideProps:GetServerSideProps = async ({ req }) => {
+	const protocol = `http${process.env.NODE_ENV === 'production' ? 's' : ''}`
+	const res = await axios.get(`${protocol}://${req.headers.host}/api/bff`).catch(console.error)
+	
+	return {
+	  props: {profile: res?.data}
+	}
+  }
+
+const Home: NextPage<Props> = ({profile}) => {
 	const [loadingResponse, setLoadingResponse] = useState<boolean>(false)
 	const [response, setResponse] = useState<any>(undefined)
 	const apiPath = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/api` : '/api'
-
-	useEffect(() => {
-		setLoading(true)
-		axios
-			.get(`${apiPath}/bff`)
-			.then((res) => {
-				setLoading(false)
-				const resProfile: Profile = res.data as Profile
-				setProfile(resProfile)
-			})
-			.catch(console.error)
-	}, [apiPath])
 
 	const handleBffRes = () => {
 		setResponse(profile)
@@ -82,36 +80,28 @@ const Home: NextPage = () => {
 			</Head>
 
 			<main className={styles.main}>
-				<h1 className={styles.title}>{loading ? 'Loading...' : profile.name}</h1>
-
-				{loading ? (
-					<p className={styles.description}>Loading...</p>
-				) : (
-					<>
-						<p className={styles.description}>
-							<strong>Birthdate:</strong> {profile.birthdate}
-						</p>
-						<p className={styles.description}>
-							<strong>Address:</strong> {profile.address}
-						</p>
-						<p className={styles.description}>
-							<strong>Joined:</strong> {dayjs(profile.joined).format('YYYY-MM-DD')}
-						</p>
-						<p className={styles.description}>
-							<strong>Last Seen (Last Recieved Message):</strong> {dayjs(profile.last_seen).format('YYYY-MM-DD')}
-						</p>
-						<p className={styles.description}>
-							<strong>New Notifications:</strong> {profile.new_notifications}
-						</p>
-						<p className={styles.description}>
-							<strong>New Messages:</strong> {profile.new_messages}
-						</p>
-						<p className={styles.description}>
-							<strong>New Friend Requests:</strong> {profile.new_friend_requests}
-						</p>
-					</>
-				)}
-
+				<h1 className={styles.title}>{profile.name}</h1>
+				<p className={styles.description}>
+					<strong>Birthdate:</strong> {profile.birthdate}
+				</p>
+				<p className={styles.description}>
+					<strong>Address:</strong> {profile.address}
+				</p>
+				<p className={styles.description}>
+					<strong>Joined:</strong> {dayjs(profile.joined).format('YYYY-MM-DD')}
+				</p>
+				<p className={styles.description}>
+					<strong>Last Seen (Last Recieved Message):</strong> {dayjs(profile.last_seen).format('YYYY-MM-DD')}
+				</p>
+				<p className={styles.description}>
+					<strong>New Notifications:</strong> {profile.new_notifications}
+				</p>
+				<p className={styles.description}>
+					<strong>New Messages:</strong> {profile.new_messages}
+				</p>
+				<p className={styles.description}>
+					<strong>New Friend Requests:</strong> {profile.new_friend_requests}
+				</p>
 				<div className={styles.buttons}>
 					<button onClick={handleBffRes} className={styles.button} type="button">
 						View BFF Response
